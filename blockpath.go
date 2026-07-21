@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Regex []string `json:"regex,omitempty"`
 	Code  *int     `json:"code,omitempty"` // Optional: Status code to respond with, defaults to 403 Forbidden
+	IncludeQuery bool `json:"include-query,omitempty"` // Optional: Include query in regex test
 }
 
 // CreateConfig creates and initializes the plugin configuration.
@@ -24,6 +25,7 @@ type blockPath struct {
 	next    http.Handler
 	regexps []*regexp.Regexp
 	code    int
+	includeQuery bool
 }
 
 // New creates and returns a plugin instance.
@@ -49,11 +51,16 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		next:    next,
 		regexps: regexps,
 		code:    code,
+		includeQuery: config.IncludeQuery,
 	}, nil
 }
 
 func (b *blockPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	currentPath := req.URL.EscapedPath()
+
+	if b.includeQuery && req.URL.RawQuery != "" {
+		currentPath += "?" + req.URL.RawQuery
+	}
 
 	for _, re := range b.regexps {
 		if re.MatchString(currentPath) {
