@@ -7,4 +7,4 @@ testData:
   Regex:
     - "^/foo(.*)"
   code: 403
-  include-query: false
+  includeQuery: false
